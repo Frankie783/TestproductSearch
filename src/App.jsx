@@ -417,14 +417,21 @@ function App() {
         throw new Error(data.error?.message || 'Failed to generate AI brief.');
       }
 
-      const textOutput =
-        data.output_text ||
-        data.choices?.[0]?.message?.content
-          ?.map((chunk) => chunk.text)
-          .join('') ||
-        '';
+      let textOutput = data.output_text;
+      if (!textOutput) {
+        const messageContent = data.choices?.[0]?.message?.content;
+        if (Array.isArray(messageContent)) {
+          textOutput = messageContent
+            .map((chunk) =>
+              typeof chunk === 'string' ? chunk : chunk.text ?? ''
+            )
+            .join('');
+        } else if (typeof messageContent === 'string') {
+          textOutput = messageContent;
+        }
+      }
 
-      setAiBrief(textOutput);
+      setAiBrief(textOutput || 'No AI response generated.');
     } catch (error) {
       setAiError(error.message);
     } finally {
